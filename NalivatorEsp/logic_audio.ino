@@ -1,0 +1,46 @@
+void Tost() {
+  static bool readyTost = false;
+  if ( tost ) {
+    if (!readyTost && PAUSEtimer.isReady()) {
+      if (volume != 0 && tracks > 0 ) {
+        lcd.clear();
+        lcd.setCursor(4, 0);
+        lcd.print("ТРЕК -  ");
+        lcd.setCursor(11, 0);
+        lcd.print((TostList[num] + 1), DEC);
+        lcd.setCursor(2, 1);
+        lcd.print("!!! ТОСТ !!!");
+        myMP3.playFolderTrack(folder, (TostList[num] + 1));
+        if (++num >= tracks) num = 0;
+#ifndef PLAYER_MH2024K_24SS
+        PAUSEtimer.setInterval(500);
+#else
+        PAUSEtimer.setInterval(2000);
+#endif
+        PAUSEtimer.reset();
+      }
+      readyTost = true;
+    }
+    if ((readyTost && ((PAUSEtimer.isReady() && digitalRead(BUSY_PIN)) || noTost )) || volume == 0 || tracks < 1) {
+      tost = false;
+      if (noTost) {
+        noTost = false;
+        myMP3.stop();
+      }
+      SAVEtimer.reset();
+      readyTost = false;
+      if (MenuFlag == 31) {
+        menu_vol(0);
+      } else {
+        if (playOn) {
+          player = true;
+          PLAYtimer.reset();
+          pause99 = false;
+          myMP3.setVolume(volume2);
+        }
+        returnMenu = true;
+      }
+      if (digitalRead(BUSY_PIN)) VoiceBlock = false;
+    }
+  }
+}

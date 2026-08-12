@@ -1,0 +1,53 @@
+name: Build ESP32 Firmware
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Arduino CLI
+        uses: arduino/setup-arduino-cli@v2
+
+      - name: Install ESP32 Core
+        run: |
+          arduino-cli config init
+          arduino-cli config add board_manager.additional_urls https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+          arduino-cli core update-index
+          arduino-cli core install esp32:esp32
+
+      - name: Install Libraries
+        run: |
+          mkdir -p ~/Arduino/libraries/
+          unzip libraries.zip -d temp_libs
+          cp -r temp_libs/*/* ~/Arduino/libraries/ 2>/dev/null || true
+          cp -r temp_libs/* ~/Arduino/libraries/ 2>/dev/null || true
+
+      - name: Compile Sketch
+        run: |
+          arduino-cli compile --fqbn esp32:esp32:esp32c3 NalivatorEsp/NalivatorEsp.ino --output-dir build_output
+
+      - name: Push binary to 'firmware' branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir firmware_repo
+          cd firmware_repo
+          git init
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git remote add origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
+          git checkout -b firmware
+          
+          cp ../build_output/NalivatorEsp.ino.bin ./firmware.bin
+          
+          git add firmware.bin
+          git commit -m "Auto-build firmware for ESP32-C3"
+          git push --force origin firmware

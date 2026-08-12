@@ -1,0 +1,6 @@
+{
+  "name": "ESP32 Boilerplate",
+  "description": "Пустой проект-шаблон для Arduino ESP32",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

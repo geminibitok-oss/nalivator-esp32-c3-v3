@@ -1,0 +1,53 @@
+<!DOCTYPE HTML>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>НАЛИВАТОР - Настройки</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: #e0e0e0; margin: 0; padding: 20px; display: flex; justify-content: center; }
+    .container { background: #1e1e1e; padding: 25px; border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.6); max-width: 450px; width: 100%; }
+    h2 { text-align: center; color: #4CAF50; border-bottom: 2px solid #333; padding-bottom: 15px; margin-top: 0; }
+    h3 { color: #81c784; margin-top: 25px; margin-bottom: 10px; font-size: 18px; }
+    label { display: block; margin-top: 10px; font-size: 14px; color: #bbb; }
+    input[type="text"], input[type="number"], input[type="url"] { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #333; border-radius: 6px; background: #2c2c2c; color: #fff; box-sizing: border-box; font-size: 16px; transition: border 0.3s; }
+    input[type="text"]:focus, input[type="number"]:focus, input[type="url"]:focus { border-color: #4CAF50; outline: none; }
+    input[type="submit"] { background: #4CAF50; color: white; border: none; padding: 14px; width: 100%; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 25px; transition: background 0.3s; }
+    input[type="submit"]:hover { background: #45a049; }
+    .btn-ota { background: #2196F3 !important; }
+    .btn-ota:hover { background: #1976D2 !important; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>НАЛИВАТОР</h2>
+    <form action="/get" onsubmit="event.preventDefault(); alert('Настройки сохранены (симуляция)');">
+      <h3>Параметры WiFi</h3>
+      <label>SSID сети</label>
+      <input type="text" value="" name="wifi_ssid" placeholder="Мой WiFi">
+      <label>Пароль</label>
+      <input type="text" value="" name="wifi_pass" placeholder="Пароль">
+      
+      <h3>Параметры MQTT</h3>
+      <label>Логин</label>
+      <input type="text" value="" name="mqtt_login" placeholder="Логин MQTT">
+      <label>Пароль</label>
+      <input type="text" value="" name="mqtt_pass" placeholder="Пароль MQTT">
+      <label>IP Адрес брокера</label>
+      <input type="text" value="" name="mqtt_host" placeholder="192.168.1.100">
+      <label>Порт</label>
+      <input type="number" value="1883" name="1234">
+      
+      <input type="submit" value="Сохранить настройки">
+    </form>
+
+    <form action="/ota" method="GET" onsubmit="event.preventDefault(); alert('Начало обновления прошивки (симуляция)');">
+      <h3>Обновление (OTA GitHub)</h3>
+      <label>Прямая ссылка на .bin файл (raw url)</label>
+      <input type="url" name="ota_url" placeholder="https://raw.githubusercontent.com/geminibitok-oss/nalivator-esp32-c3/firmware/firmware.bin" required>
+      <input type="submit" value="Обновить прошивку" class="btn-ota">
+    </form>
+  </div>
+</body>
+</html>
+
