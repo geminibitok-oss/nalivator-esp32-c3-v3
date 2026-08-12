@@ -83,7 +83,7 @@ const char index_html[] PROGMEM = R"rawliteral(
     <form action="/ota" method="GET">
       <h3>Обновление (OTA GitHub)</h3>
       <label>Прямая ссылка на .bin файл (raw url)</label>
-      <input type="url" name="ota_url" placeholder="https://raw.githubusercontent.com/.../firmware.bin" required>
+      <input type="url" name="ota_url" value="https://raw.githubusercontent.com/geminibitok-oss/nalivator-esp32-c3-v3/firmware/firmware.bin" placeholder="https://raw.githubusercontent.com/geminibitok-oss/nalivator-esp32-c3-v3/firmware/firmware.bin" required>
       <input type="submit" value="Обновить прошивку" class="btn-ota">
     </form>
   </div>
