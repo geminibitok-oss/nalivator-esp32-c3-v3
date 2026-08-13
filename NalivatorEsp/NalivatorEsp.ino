@@ -98,11 +98,11 @@ Preferences nalivsave;
 class Mp3Notify {
 public:
   static void PrintlnSourceAction(DfMp3_PlaySources source, const char* action) {}
-  template <class T> static void OnError(T& mp3, uint16_t errorCode) {}
-  template <class T> static void OnPlayFinished(T& mp3, DfMp3_PlaySources source, uint16_t track) {}
-  template <class T> static void OnPlaySourceOnline(T& mp3, DfMp3_PlaySources source) {}
-  template <class T> static void OnPlaySourceInserted(T& mp3, DfMp3_PlaySources source) {}
-  template <class T> static void OnPlaySourceRemoved(T& mp3, DfMp3_PlaySources source) {}
+  static void OnError(uint16_t errorCode) {}
+  static void OnPlayFinished(DfMp3_PlaySources source, uint16_t track) {}
+  static void OnPlaySourceOnline(DfMp3_PlaySources source) {}
+  static void OnPlaySourceInserted(DfMp3_PlaySources source) {}
+  static void OnPlaySourceRemoved(DfMp3_PlaySources source) {}
 };
 
 #include "webpage.h" 
