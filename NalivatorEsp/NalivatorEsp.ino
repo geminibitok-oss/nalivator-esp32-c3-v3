@@ -97,6 +97,8 @@ Preferences nalivsave;
 
 class Mp3Notify {
 public:
+  typedef void TargetType;
+  static void SetTarget(TargetType*) {}
   static void PrintlnSourceAction(DfMp3_PlaySources source, const char* action) {}
   static void OnError(uint16_t errorCode) {}
   static void OnPlayFinished(DfMp3_PlaySources source, uint16_t track) {}
