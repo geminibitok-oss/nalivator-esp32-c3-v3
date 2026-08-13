@@ -126,10 +126,12 @@ public:
 
 
 
+HardwareSerial mp3Serial(0);
+
 #ifndef PLAYER_16_PIN
-   DFMiniMp3<HardwareSerial, Mp3Notify, Mp3ChipOriginal> myMP3(Serial0);
+   DFMiniMp3<HardwareSerial, Mp3Notify, Mp3ChipOriginal> myMP3(mp3Serial);
 #else
-   DFMiniMp3<HardwareSerial, Mp3Notify, Mp3ChipMH2024K16SS> myMP3(Serial0);
+   DFMiniMp3<HardwareSerial, Mp3Notify, Mp3ChipMH2024K16SS> myMP3(mp3Serial);
 #endif
 
 #ifndef TTP229_USED
