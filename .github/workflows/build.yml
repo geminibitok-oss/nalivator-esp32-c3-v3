@@ -36,59 +36,37 @@ jobs:
         run: |
           arduino-cli compile --fqbn esp32:esp32:esp32c3 NalivatorEsp/NalivatorEsp.ino --output-dir build_output
 
-      - name: Create Auto-Flash Scripts
+      - name: Generate Flash Scripts
         run: |
-          # Создаем flash_windows.bat для Windows
-          cat << 'EOF' > build_output/flash_windows.bat
-          @echo off
-          chcp 65001 > nul
-          echo ======================================================
-          echo      Автоматическая прошивка ESP32-C3
-          echo ======================================================
-          echo.
-          
-          python --version >nul 2>&1
-          if %errorlevel% neq 0 (
-              echo [!] Ошибка: Python не установлен!
-              echo Установите Python с сайта https://www.python.org/ (обязательно поставьте галочку "Add to PATH")
-              pause
-              exit /b 1
-          )
-
-          echo [*] Проверка и установка esptool...
-          pip install --upgrade esptool >nul 2>&1
-
-          echo [*] Прошивка ESP32-C3...
-          python -m esptool --chip esp32c3 write_flash 0x0 NalivatorEsp.ino.bootloader.bin 0x8000 NalivatorEsp.ino.partitions.bin 0x10000 NalivatorEsp.ino.bin
-
-          if %errorlevel% equ 0 (
-              echo.
-              echo [OK] УСПЕШНО! Прошивка успешно загружена на ESP32-C3.
-          ) else (
-              echo.
-              echo [!] Ошибка прошивки.
-              echo Подсказка: Зажмите кнопку BOOT на плате, нажмите RESET, отпустите BOOT и повторите запуск.
-          )
-          echo.
-          pause
-          EOF
-
-          # Создаем flash_linux_mac.sh для Linux / macOS
-          cat << 'EOF' > build_output/flash_linux_mac.sh
-          #!/bin/bash
-          echo "======================================================"
-          echo "     Автоматическая прошивка ESP32-C3"
-          echo "======================================================"
-          
-          if ! command -v python3 &> /dev/null; then
-              echo "[!] Python3 не найден. Установите python3."
-              exit 1
-          fi
-
-          pip3 install --upgrade esptool
-          python3 -m esptool --chip esp32c3 write_flash 0x0 NalivatorEsp.ino.bootloader.bin 0x8000 NalivatorEsp.ino.partitions.bin 0x10000 NalivatorEsp.ino.bin
-          EOF
-          chmod +x build_output/flash_linux_mac.sh
+          # Создаем flash_windows.bat с правильными CRLF переносами строк
+          printf "@echo off\r\n" > build_output/flash_windows.bat
+          printf "title ESP32-C3 Firmware Flasher\r\n" >> build_output/flash_windows.bat
+          printf "echo ======================================================\r\n" >> build_output/flash_windows.bat
+          printf "echo            ESP32-C3 Firmware Flasher\r\n" >> build_output/flash_windows.bat
+          printf "echo ======================================================\r\n" >> build_output/flash_windows.bat
+          printf "echo.\r\n" >> build_output/flash_windows.bat
+          printf "where python >nul 2>nul\r\n" >> build_output/flash_windows.bat
+          printf "if %%errorlevel%% neq 0 (\r\n" >> build_output/flash_windows.bat
+          printf "    echo [ERROR] Python is not installed or not in PATH!\r\n" >> build_output/flash_windows.bat
+          printf "    echo Please install Python from https://www.python.org/ and check 'Add to PATH'\r\n" >> build_output/flash_windows.bat
+          printf "    pause\r\n" >> build_output/flash_windows.bat
+          printf "    exit /b 1\r\n" >> build_output/flash_windows.bat
+          printf ")\r\n" >> build_output/flash_windows.bat
+          printf "echo [*] Checking esptool...\r\n" >> build_output/flash_windows.bat
+          printf "pip install --upgrade esptool\r\n" >> build_output/flash_windows.bat
+          printf "echo.\r\n" >> build_output/flash_windows.bat
+          printf "echo [*] Starting flashing ESP32-C3...\r\n" >> build_output/flash_windows.bat
+          printf "python -m esptool --chip esp32c3 write_flash 0x0 NalivatorEsp.ino.bootloader.bin 0x8000 NalivatorEsp.ino.partitions.bin 0x10000 NalivatorEsp.ino.bin\r\n" >> build_output/flash_windows.bat
+          printf "if %%errorlevel%% equ 0 (\r\n" >> build_output/flash_windows.bat
+          printf "    echo.\r\n" >> build_output/flash_windows.bat
+          printf "    echo [SUCCESS] ESP32-C3 flashed successfully!\r\n" >> build_output/flash_windows.bat
+          printf ") else (\r\n" >> build_output/flash_windows.bat
+          printf "    echo.\r\n" >> build_output/flash_windows.bat
+          printf "    echo [ERROR] Flash failed.\r\n" >> build_output/flash_windows.bat
+          printf "    echo Hint: Hold BOOT button on ESP32, press RESET, release BOOT and try again.\r\n" >> build_output/flash_windows.bat
+          printf ")\r\n" >> build_output/flash_windows.bat
+          printf "echo.\r\n" >> build_output/flash_windows.bat
+          printf "pause\r\n" >> build_output/flash_windows.bat
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
