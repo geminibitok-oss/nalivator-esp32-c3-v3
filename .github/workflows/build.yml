@@ -36,34 +36,41 @@ jobs:
         run: |
           arduino-cli compile --fqbn esp32:esp32:esp32c3 NalivatorEsp/NalivatorEsp.ino --output-dir build_output
 
-      - name: Generate Flash Scripts
+      - name: Package Standalone esptool.exe and Flasher Script
         run: |
-          # Создаем flash_windows.bat с правильными CRLF переносами строк
+          # Скачиваем официальный автономный esptool.exe (не требует установки Python)
+          curl -L -o esptool_win.zip https://github.com/espressif/esptool/releases/download/v4.7.0/esptool-v4.7.0-win64.zip
+          unzip -q esptool_win.zip
+          cp esptool-v4.7.0-win64/esptool.exe build_output/esptool.exe
+
+          # Создаем надежный flash_windows.bat с правильными CRLF переносами строк
           printf "@echo off\r\n" > build_output/flash_windows.bat
+          printf "chcp 65001 >nul\r\n" >> build_output/flash_windows.bat
+          printf "cd /d \"%%%%~dp0\"\r\n" >> build_output/flash_windows.bat
           printf "title ESP32-C3 Firmware Flasher\r\n" >> build_output/flash_windows.bat
           printf "echo ======================================================\r\n" >> build_output/flash_windows.bat
           printf "echo            ESP32-C3 Firmware Flasher\r\n" >> build_output/flash_windows.bat
           printf "echo ======================================================\r\n" >> build_output/flash_windows.bat
           printf "echo.\r\n" >> build_output/flash_windows.bat
-          printf "where python >nul 2>nul\r\n" >> build_output/flash_windows.bat
-          printf "if %%errorlevel%% neq 0 (\r\n" >> build_output/flash_windows.bat
-          printf "    echo [ERROR] Python is not installed or not in PATH!\r\n" >> build_output/flash_windows.bat
-          printf "    echo Please install Python from https://www.python.org/ and check 'Add to PATH'\r\n" >> build_output/flash_windows.bat
+          printf "if not exist \"%%%%~dp0esptool.exe\" (\r\n" >> build_output/flash_windows.bat
+          printf "    echo [ERROR] esptool.exe not found!\r\n" >> build_output/flash_windows.bat
           printf "    pause\r\n" >> build_output/flash_windows.bat
           printf "    exit /b 1\r\n" >> build_output/flash_windows.bat
           printf ")\r\n" >> build_output/flash_windows.bat
-          printf "echo [*] Checking esptool...\r\n" >> build_output/flash_windows.bat
-          printf "pip install --upgrade esptool\r\n" >> build_output/flash_windows.bat
-          printf "echo.\r\n" >> build_output/flash_windows.bat
-          printf "echo [*] Starting flashing ESP32-C3...\r\n" >> build_output/flash_windows.bat
-          printf "python -m esptool --chip esp32c3 write_flash 0x0 NalivatorEsp.ino.bootloader.bin 0x8000 NalivatorEsp.ino.partitions.bin 0x10000 NalivatorEsp.ino.bin\r\n" >> build_output/flash_windows.bat
-          printf "if %%errorlevel%% equ 0 (\r\n" >> build_output/flash_windows.bat
+          printf "echo [*] Flashing ESP32-C3...\r\n" >> build_output/flash_windows.bat
+          printf "\"%%%%~dp0esptool.exe\" --chip esp32c3 write_flash 0x0 \"%%%%~dp0NalivatorEsp.ino.bootloader.bin\" 0x8000 \"%%%%~dp0NalivatorEsp.ino.partitions.bin\" 0x10000 \"%%%%~dp0NalivatorEsp.ino.bin\"\r\n" >> build_output/flash_windows.bat
+          printf "if errorlevel 1 (\r\n" >> build_output/flash_windows.bat
           printf "    echo.\r\n" >> build_output/flash_windows.bat
-          printf "    echo [SUCCESS] ESP32-C3 flashed successfully!\r\n" >> build_output/flash_windows.bat
+          printf "    echo ======================================================\r\n" >> build_output/flash_windows.bat
+          printf "    echo  [ERROR] Flash failed!\r\n" >> build_output/flash_windows.bat
+          printf "    echo  Hint: Hold BOOT button on ESP32, press RESET,\r\n" >> build_output/flash_windows.bat
+          printf "    echo        release BOOT and try again.\r\n" >> build_output/flash_windows.bat
+          printf "    echo ======================================================\r\n" >> build_output/flash_windows.bat
           printf ") else (\r\n" >> build_output/flash_windows.bat
           printf "    echo.\r\n" >> build_output/flash_windows.bat
-          printf "    echo [ERROR] Flash failed.\r\n" >> build_output/flash_windows.bat
-          printf "    echo Hint: Hold BOOT button on ESP32, press RESET, release BOOT and try again.\r\n" >> build_output/flash_windows.bat
+          printf "    echo ======================================================\r\n" >> build_output/flash_windows.bat
+          printf "    echo  [SUCCESS] ESP32-C3 flashed successfully!\r\n" >> build_output/flash_windows.bat
+          printf "    echo ======================================================\r\n" >> build_output/flash_windows.bat
           printf ")\r\n" >> build_output/flash_windows.bat
           printf "echo.\r\n" >> build_output/flash_windows.bat
           printf "pause\r\n" >> build_output/flash_windows.bat
