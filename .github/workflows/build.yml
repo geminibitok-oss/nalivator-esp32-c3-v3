@@ -1,0 +1,84 @@
+name: Build ESP32 Firmware
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Arduino CLI
+        uses: arduino/setup-arduino-cli@v2
+
+      - name: Install ESP32 Core
+        run: |
+          arduino-cli config init
+          arduino-cli config add board_manager.additional_urls https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+          arduino-cli core update-index
+          arduino-cli core install esp32:esp32@2.0.17
+
+      - name: Install Libraries
+        run: |
+          mkdir -p ~/Arduino/libraries/
+          cp -r libraries/* ~/Arduino/libraries/
+
+      - name: Compile Sketch
+        run: |
+          arduino-cli compile --fqbn esp32:esp32:esp32c3 NalivatorEsp/NalivatorEsp.ino --output-dir build_output
+
+      - name: Package Standalone esptool.exe and Flasher Script
+        run: |
+          # Скачиваем и гарантированно находим esptool.exe
+          mkdir -p temp_zip
+          curl -L -o esptool_win.zip https://github.com/espressif/esptool/releases/download/v4.7.0/esptool-v4.7.0-win64.zip
+          unzip -q esptool_win.zip -d temp_zip
+          find temp_zip -name "esptool.exe" -exec cp {} build_output/esptool.exe \;
+          rm -rf temp_zip esptool_win.zip
+
+          # Создаем надежный flash_windows.bat с правильными CRLF переносами строк
+          printf "@echo off\r\n" > build_output/flash_windows.bat
+          printf "chcp 65001 >nul\r\n" >> build_output/flash_windows.bat
+          printf "cd /d \"%%%%~dp0\"\r\n" >> build_output/flash_windows.bat
+          printf "title ESP32-C3 Firmware Flasher\r\n" >> build_output/flash_windows.bat
+          printf "echo ======================================================\r\n" >> build_output/flash_windows.bat
+          printf "echo            ESP32-C3 Firmware Flasher\r\n" >> build_output/flash_windows.bat
+          printf "echo ======================================================\r\n" >> build_output/flash_windows.bat
+          printf "echo.\r\n" >> build_output/flash_windows.bat
+          printf "if not exist \"%%%%~dp0esptool.exe\" (\r\n" >> build_output/flash_windows.bat
+          printf "    echo [ERROR] esptool.exe not found!\r\n" >> build_output/flash_windows.bat
+          printf "    pause\r\n" >> build_output/flash_windows.bat
+          printf "    exit /b 1\r\n" >> build_output/flash_windows.bat
+          printf ")\r\n" >> build_output/flash_windows.bat
+          printf "echo [*] Flashing ESP32-C3...\r\n" >> build_output/flash_windows.bat
+          printf "\"%%%%~dp0esptool.exe\" --chip esp32c3 write_flash 0x0 \"%%%%~dp0NalivatorEsp.ino.bootloader.bin\" 0x8000 \"%%%%~dp0NalivatorEsp.ino.partitions.bin\" 0x10000 \"%%%%~dp0NalivatorEsp.ino.bin\"\r\n" >> build_output/flash_windows.bat
+          printf "if errorlevel 1 (\r\n" >> build_output/flash_windows.bat
+          printf "    echo.\r\n" >> build_output/flash_windows.bat
+          printf "    echo ======================================================\r\n" >> build_output/flash_windows.bat
+          printf "    echo  [ERROR] Flash failed!\r\n" >> build_output/flash_windows.bat
+          printf "    echo  Hint: Hold BOOT button on ESP32, press RESET,\r\n" >> build_output/flash_windows.bat
+          printf "    echo        release BOOT and try again.\r\n" >> build_output/flash_windows.bat
+          printf "    echo ======================================================\r\n" >> build_output/flash_windows.bat
+          printf ") else (\r\n" >> build_output/flash_windows.bat
+          printf "    echo.\r\n" >> build_output/flash_windows.bat
+          printf "    echo ======================================================\r\n" >> build_output/flash_windows.bat
+          printf "    echo  [SUCCESS] ESP32-C3 flashed successfully!\r\n" >> build_output/flash_windows.bat
+          printf "    echo ======================================================\r\n" >> build_output/flash_windows.bat
+          printf ")\r\n" >> build_output/flash_windows.bat
+          printf "echo.\r\n" >> build_output/flash_windows.bat
+          printf "pause\r\n" >> build_output/flash_windows.bat
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: esp32-firmware
+          path: build_output/
