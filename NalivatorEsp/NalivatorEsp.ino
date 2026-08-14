@@ -5,7 +5,7 @@
 #define NUM_SHOTS 5  // количество рюмок (оно же кол-во светодиодов и концевиков!), всё делалось под 6 рюмок!!!!
 //#define TWO_PUMPS  // раскомментировать для варианта с двумя насосами-кранами разлива
 #define FIRMWARE_BY_AIR      // Ардуино OTA, если  нужна прошивка по воздуху раскомметировать
-#define DEBUG_UART 0         // отладка, 0 выключено, 1 включено
+#define DEBUG_UART 1         // отладка и консоль UART: 0 выключено, 1 включено
 #define PRE_PAUSE 1500UL     // пауза перед движением разливного носика к рюмке к рюмке
 #define POST_PAUSE 1000UL     // пауза после остановки разливного носика до включения помпы
 #define NALITO_PAUSE 3000UL  // время показа меню налито, после розлива
@@ -107,6 +107,7 @@ public:
   static void OnPlaySourceRemoved(DfMp3_PlaySources source) {}
 };
 
+#include "version.h"
 #include "webpage.h" 
 #include <HTTPClient.h>
 #include <HTTPUpdate.h>
@@ -388,42 +389,57 @@ enum { SEARCH,
 
 void connectToWifi() {
   if(WIFI_SSID == "" || WIFI_PASS == "" || !digitalRead(Pin_AP) || countWifi >= 12) {
-   WiFi.mode(WIFI_AP);
-   WiFi.softAP("NALIVATOR");
-   xTimerStop(wifiReconnectTimer, 0);  // стоп таймера переподключения к wifi
-   Serial.println(" Wi-Fi soft AP Nalivator");
+    WiFi.mode(WIFI_AP);
+    WiFi.softAP("NALIVATOR");
+    xTimerStop(wifiReconnectTimer, 0);  // стоп таймера переподключения к wifi
+    Serial.println(F("\n======================================================"));
+    Serial.println(F(" [WiFi AP] Запущена точка доступа: NALIVATOR"));
+    Serial.print(F(" [WiFi AP] IP адрес наливатора: "));
+    Serial.println(WiFi.softAPIP());
+    Serial.print(F(" [Web]     Веб-интерфейс: http://"));
+    Serial.println(WiFi.softAPIP());
+    Serial.println(F("======================================================"));
   } else {
-  WiFi.mode(WIFI_STA);
-  Serial.println("Connecting to Wi-Fi...");
-  WiFi.begin(WIFI_SSID.c_str(), WIFI_PASS.c_str());
-  countWifi++;
- }
+    WiFi.mode(WIFI_STA);
+    Serial.print(F("[WiFi] Подключение к сети: "));
+    Serial.print(WIFI_SSID);
+    Serial.printf(" (попытка %d/12)...\n", countWifi + 1);
+    WiFi.begin(WIFI_SSID.c_str(), WIFI_PASS.c_str());
+    countWifi++;
+  }
 }
 
 void connectToMqtt() {
-  Serial.println("Connecting to MQTT...");
-  mqttClient.connect();
+  if (MQTT_HOST.length() > 0) {
+    Serial.printf("[MQTT] Подключение к брокеру: %s:%s...\n", MQTT_HOST.c_str(), MQTT_PORT.c_str());
+    mqttClient.connect();
+  }
 }
 
 void WiFiEvent(WiFiEvent_t event) {
   switch (event) {
-
     case ARDUINO_EVENT_WIFI_READY:
-      Serial.println("WiFi ready");
+      Serial.println(F("[WiFi] Модуль готов"));
       break;
 
     case ARDUINO_EVENT_WIFI_STA_START:
-      Serial.println("WiFi STA starting");
+      Serial.println(F("[WiFi] Режим клиента (STA) запущен"));
       break;
 
     case ARDUINO_EVENT_WIFI_STA_CONNECTED:
-      Serial.println("WiFi STA connected");
+      Serial.println(F("[WiFi] Соединение с точкой доступа установлено"));
       break;    
 
     case ARDUINO_EVENT_WIFI_STA_GOT_IP:
-      Serial.println("WiFi connected");
-      Serial.println("IP address: ");
+      Serial.println(F("\n======================================================"));
+      Serial.println(F(" [WiFi] УСПЕШНО ПОДКЛЮЧЕНО К ДОМАШНЕЙ СЕТИ!"));
+      Serial.print(F(" [WiFi] SSID: "));
+      Serial.println(WiFi.SSID());
+      Serial.print(F(" [WiFi] IP адрес: "));
       Serial.println(WiFi.localIP());
+      Serial.print(F(" [Web]  Веб-интерфейс: http://"));
+      Serial.println(WiFi.localIP());
+      Serial.println(F("======================================================\n"));
       xTimerStop(wifiReconnectTimer, 0);  // стоп таймера переподключения к wifi
       countWifi = 0;
       connectToMqtt();
@@ -435,7 +451,7 @@ void WiFiEvent(WiFiEvent_t event) {
       break;    
 
     case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
-      Serial.println("WiFi lost connection");
+      Serial.println(F("[WiFi] Соединение потеряно, повторное подключение..."));
       xTimerStop(mqttReconnectTimer, 0);  // остнаовка таймера подключения к mqtt, если пропало соединение с wifi
       if( xTimerIsTimerActive( wifiReconnectTimer ) == false ) xTimerStart(wifiReconnectTimer, 0);  // старт таймера переподключения к wifi
       status = 0;

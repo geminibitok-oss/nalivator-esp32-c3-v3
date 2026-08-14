@@ -155,9 +155,15 @@ for (uint8_t i = 0; i < (MAX_DRINK/5); i++) DrinkRnd[i] = i*5+5;// заполн�
 
   nalivsave.end();
 
-#if (DEBUG_UART == 1)
   Serial.begin(115200);
-#endif
+  delay(100);
+  Serial.println(F("\n\n======================================================"));
+  Serial.print(F("        NALIVATOR ESP32-C3 | Прошивка v"));
+  Serial.println(F(FIRMWARE_VERSION));
+  Serial.print(F("        Сборка: "));
+  Serial.println(F(BUILD_TIMESTAMP));
+  Serial.println(F("  Для справки по командам отправьте: help или ?       "));
+  Serial.println(F("======================================================"));
 
 
 mqttReconnectTimer = xTimerCreate("mqttTimer", pdMS_TO_TICKS(5000), pdFALSE, (void*)0, reinterpret_cast<TimerCallbackFunction_t>(connectToMqtt));

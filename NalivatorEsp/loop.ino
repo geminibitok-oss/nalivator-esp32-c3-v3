@@ -36,6 +36,8 @@ void performOtaUpdate(String url) {
 }
 
 void loop() {
+    uartTick();
+
     if (startOtaUpdate) {
         startOtaUpdate = false;
         performOtaUpdate(otaUrl);
