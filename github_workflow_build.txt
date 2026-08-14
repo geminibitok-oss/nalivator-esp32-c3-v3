@@ -37,14 +37,12 @@ jobs:
       - name: Determine Next Version
         id: versioning
         run: |
-          # Автоматическое инкрементирование номера сборки (Build Number)
-          # Берем базовую версию 1.0 и добавляем номер запуска GitHub Run Number
           BUILD_NUM="${{ github.run_number }}"
           TAG_NAME="v1.0.${BUILD_NUM}"
           echo "CURRENT_TAG=${TAG_NAME}" >> $GITHUB_ENV
           echo "BUILD_NUMBER=${BUILD_NUM}" >> $GITHUB_ENV
 
-          # Обновляем версию прямо в коде version.h перед компиляцией
+          # Записываем версию в код
           cat << EOF > NalivatorEsp/version.h
           #pragma once
           #define FIRMWARE_VERSION "1.0.${BUILD_NUM}"
@@ -58,18 +56,15 @@ jobs:
 
       - name: Package Flasher and Rename Firmware
         run: |
-          # Переименовываем бинарник прошивки для удобства
           cp build_output/NalivatorEsp.ino.bin build_output/firmware.bin
           cp build_output/NalivatorEsp.ino.bin "build_output/nalivator_${CURRENT_TAG}.bin"
 
-          # Скачиваем автономный esptool.exe
           mkdir -p temp_zip
           curl -L -o esptool_win.zip https://github.com/espressif/esptool/releases/download/v4.7.0/esptool-v4.7.0-win64.zip
           unzip -q esptool_win.zip -d temp_zip
           find temp_zip -name "esptool.exe" -exec cp {} build_output/esptool.exe \;
           rm -rf temp_zip esptool_win.zip
 
-          # Создаем flash_windows.bat
           cat << 'EOF' > build_output/flash_windows.bat
           @echo off
           chcp 65001 >nul
@@ -108,8 +103,12 @@ jobs:
           pause
           EOF
 
-          sed -i 's/$/\r/' build_output/flash_windows.bat
           sed -i 's/^[ \t]*//' build_output/flash_windows.bat
+
+          cp terminal.bat build_output/terminal.bat
+          cp terminal.ps1 build_output/terminal.ps1
+          sed -i 's/$/\r/' build_output/terminal.bat
+          sed -i 's/$/\r/' build_output/terminal.ps1
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -129,10 +128,6 @@ jobs:
             - **Версия:** `${{ env.CURRENT_TAG }}`
             - **Сборка:** `#${{ env.BUILD_NUMBER }}`
             - **Коммит:** `${{ github.sha }}`
-            
-            ### Файлы:
-            - `firmware.bin` — бинарный файл для OTA обновления через веб-интерфейс
-            - `nalivator_${{ env.CURRENT_TAG }}.bin` — именованный бинарник
           files: |
             build_output/firmware.bin
             build_output/nalivator_${{ env.CURRENT_TAG }}.bin
@@ -141,3 +136,5 @@ jobs:
             build_output/NalivatorEsp.ino.partitions.bin
             build_output/esptool.exe
             build_output/flash_windows.bat
+            build_output/terminal.bat
+            build_output/terminal.ps1

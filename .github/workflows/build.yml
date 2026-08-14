@@ -103,8 +103,7 @@ jobs:
           pause
           EOF
 
-          sed -i 's/$/\r/' build_output/flash_windows.bat
-          sed -i '^[ \t]*//' build_output/flash_windows.bat
+          sed -i 's/^[ \t]*//' build_output/flash_windows.bat
 
           cp terminal.bat build_output/terminal.bat
           cp terminal.ps1 build_output/terminal.ps1
