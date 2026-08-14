@@ -1,4 +1,13 @@
 void setup() {
+  Serial.begin(115200);
+  delay(100);
+  Serial.println(F("\n======================================================"));
+  Serial.print(F("        NALIVATOR ESP32-C3 | Прошивка v"));
+  Serial.println(F(FIRMWARE_VERSION));
+  Serial.print(F("        Сборка: "));
+  Serial.println(F(BUILD_TIMESTAMP));
+  Serial.println(F("  Для справки по командам отправьте: help или ?       "));
+  Serial.println(F("======================================================"));
 
 #ifndef STEPPER_MOTOR_USED
   servo.setPeriodHertz(50);
@@ -155,17 +164,6 @@ for (uint8_t i = 0; i < (MAX_DRINK/5); i++) DrinkRnd[i] = i*5+5;// заполн�
 
   nalivsave.end();
 
-  Serial.begin(115200);
-  delay(100);
-  Serial.println(F("\n\n======================================================"));
-  Serial.print(F("        NALIVATOR ESP32-C3 | Прошивка v"));
-  Serial.println(F(FIRMWARE_VERSION));
-  Serial.print(F("        Сборка: "));
-  Serial.println(F(BUILD_TIMESTAMP));
-  Serial.println(F("  Для справки по командам отправьте: help или ?       "));
-  Serial.println(F("======================================================"));
-
-
 mqttReconnectTimer = xTimerCreate("mqttTimer", pdMS_TO_TICKS(5000), pdFALSE, (void*)0, reinterpret_cast<TimerCallbackFunction_t>(connectToMqtt));
 wifiReconnectTimer = xTimerCreate("wifiTimer", pdMS_TO_TICKS(5000), pdFALSE, (void*)0, reinterpret_cast<TimerCallbackFunction_t>(connectToWifi));
 
@@ -247,6 +245,7 @@ wifiReconnectTimer = xTimerCreate("wifiTimer", pdMS_TO_TICKS(5000), pdFALSE, (vo
   ArduinoOTA.begin();
 #endif  
 
+  mp3Serial.begin(9600, SERIAL_8N1, MP3_RX_PIN, MP3_TX_PIN);
   myMP3.begin(9600, PLAYER_SERIAL_TIMEOUT);  // скорость порта, таймаут порта мс.
   delay(1000);
   myMP3.setEq(DfMp3_Eq_Normal);

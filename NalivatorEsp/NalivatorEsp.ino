@@ -129,7 +129,11 @@ public:
 
 
 
-HardwareSerial mp3Serial(0);
+// ПИНЫ ДЛЯ MP3 ПЛЕЕРА (UART1)
+#define MP3_RX_PIN 20
+#define MP3_TX_PIN 21
+
+HardwareSerial mp3Serial(1);
 
 #ifndef PLAYER_16_PIN
    DFMiniMp3<HardwareSerial, Mp3Notify, Mp3ChipOriginal> myMP3(mp3Serial);
