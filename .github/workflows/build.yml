@@ -38,44 +38,57 @@ jobs:
 
       - name: Package Standalone esptool.exe and Flasher Script
         run: |
-          # Скачиваем и гарантированно находим esptool.exe
+          # Скачиваем официальный автономный esptool.exe
           mkdir -p temp_zip
           curl -L -o esptool_win.zip https://github.com/espressif/esptool/releases/download/v4.7.0/esptool-v4.7.0-win64.zip
           unzip -q esptool_win.zip -d temp_zip
           find temp_zip -name "esptool.exe" -exec cp {} build_output/esptool.exe \;
           rm -rf temp_zip esptool_win.zip
 
-          # Создаем надежный flash_windows.bat с правильными CRLF переносами строк
-          printf "@echo off\r\n" > build_output/flash_windows.bat
-          printf "chcp 65001 >nul\r\n" >> build_output/flash_windows.bat
-          printf "cd /d \"%%%%~dp0\"\r\n" >> build_output/flash_windows.bat
-          printf "title ESP32-C3 Firmware Flasher\r\n" >> build_output/flash_windows.bat
-          printf "echo ======================================================\r\n" >> build_output/flash_windows.bat
-          printf "echo            ESP32-C3 Firmware Flasher\r\n" >> build_output/flash_windows.bat
-          printf "echo ======================================================\r\n" >> build_output/flash_windows.bat
-          printf "echo.\r\n" >> build_output/flash_windows.bat
-          printf "if not exist \"%%%%~dp0esptool.exe\" (\r\n" >> build_output/flash_windows.bat
-          printf "    echo [ERROR] esptool.exe not found!\r\n" >> build_output/flash_windows.bat
-          printf "    pause\r\n" >> build_output/flash_windows.bat
-          printf "    exit /b 1\r\n" >> build_output/flash_windows.bat
-          printf ")\r\n" >> build_output/flash_windows.bat
-          printf "echo [*] Flashing ESP32-C3...\r\n" >> build_output/flash_windows.bat
-          printf "\"%%%%~dp0esptool.exe\" --chip esp32c3 write_flash 0x0 \"%%%%~dp0NalivatorEsp.ino.bootloader.bin\" 0x8000 \"%%%%~dp0NalivatorEsp.ino.partitions.bin\" 0x10000 \"%%%%~dp0NalivatorEsp.ino.bin\"\r\n" >> build_output/flash_windows.bat
-          printf "if errorlevel 1 (\r\n" >> build_output/flash_windows.bat
-          printf "    echo.\r\n" >> build_output/flash_windows.bat
-          printf "    echo ======================================================\r\n" >> build_output/flash_windows.bat
-          printf "    echo  [ERROR] Flash failed!\r\n" >> build_output/flash_windows.bat
-          printf "    echo  Hint: Hold BOOT button on ESP32, press RESET,\r\n" >> build_output/flash_windows.bat
-          printf "    echo        release BOOT and try again.\r\n" >> build_output/flash_windows.bat
-          printf "    echo ======================================================\r\n" >> build_output/flash_windows.bat
-          printf ") else (\r\n" >> build_output/flash_windows.bat
-          printf "    echo.\r\n" >> build_output/flash_windows.bat
-          printf "    echo ======================================================\r\n" >> build_output/flash_windows.bat
-          printf "    echo  [SUCCESS] ESP32-C3 flashed successfully!\r\n" >> build_output/flash_windows.bat
-          printf "    echo ======================================================\r\n" >> build_output/flash_windows.bat
-          printf ")\r\n" >> build_output/flash_windows.bat
-          printf "echo.\r\n" >> build_output/flash_windows.bat
-          printf "pause\r\n" >> build_output/flash_windows.bat
+          # Создаем надежный flash_windows.bat (экранирование %dp0 исправлено)
+          cat << 'EOF' > build_output/flash_windows.bat
+          @echo off
+          chcp 65001 >nul
+          cd /d "%~dp0"
+          title ESP32-C3 Firmware Flasher
+
+          echo ======================================================
+          echo            ESP32-C3 Firmware Flasher
+          echo ======================================================
+          echo.
+
+          if not exist "%~dp0esptool.exe" (
+              echo [ERROR] esptool.exe not found in this folder!
+              echo.
+              pause
+              exit /b 1
+          )
+
+          echo [*] Flashing ESP32-C3...
+          "%~dp0esptool.exe" --chip esp32c3 write_flash 0x0 "%~dp0NalivatorEsp.ino.bootloader.bin" 0x8000 "%~dp0NalivatorEsp.ino.partitions.bin" 0x10000 "%~dp0NalivatorEsp.ino.bin"
+
+          if errorlevel 1 (
+              echo.
+              echo ======================================================
+              echo  [ERROR] Flash failed!
+              echo  Hint: Hold BOOT button on ESP32, press RESET,
+              echo        release BOOT and try again.
+              echo ======================================================
+          ) else (
+              echo.
+              echo ======================================================
+              echo  [SUCCESS] ESP32-C3 flashed successfully!
+              echo ======================================================
+          )
+
+          echo.
+          pause
+          EOF
+
+          # Преобразуем переносы строк в формат Windows (CRLF)
+          sed -i 's/$/\r/' build_output/flash_windows.bat
+          # Убираем возможные лишние отступы
+          sed -i 's/^[ \t]*//' build_output/flash_windows.bat
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
