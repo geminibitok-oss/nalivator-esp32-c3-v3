@@ -104,7 +104,12 @@ jobs:
           EOF
 
           sed -i 's/$/\r/' build_output/flash_windows.bat
-          sed -i 's/^[ \t]*//' build_output/flash_windows.bat
+          sed -i '^[ \t]*//' build_output/flash_windows.bat
+
+          cp terminal.bat build_output/terminal.bat
+          cp terminal.ps1 build_output/terminal.ps1
+          sed -i 's/$/\r/' build_output/terminal.bat
+          sed -i 's/$/\r/' build_output/terminal.ps1
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -132,3 +137,5 @@ jobs:
             build_output/NalivatorEsp.ino.partitions.bin
             build_output/esptool.exe
             build_output/flash_windows.bat
+            build_output/terminal.bat
+            build_output/terminal.ps1
